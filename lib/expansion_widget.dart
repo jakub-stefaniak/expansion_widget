@@ -25,8 +25,13 @@ class ExpansionWidget extends StatefulWidget {
   /// The builder of title.
   ///
   /// Typically a [Button] widget that call [toggleFunction] when pressed.
-  final Widget Function(double animationValue, double easeInValue,
-      bool isExpanded, Function({bool animated}) toggleFunction) titleBuilder;
+  final Widget Function(
+    double animationValue,
+    double easeInValue,
+    bool isExpanded,
+    Function({bool animated}) toggleFunction,
+    Function(bool, bool) setExpanded,
+  ) titleBuilder;
 
   /// Function to save expansion state
   /// Called when expansion state changed
@@ -111,24 +116,27 @@ class ExpansionWidgetState extends State<ExpansionWidget>
   }
 
   void expand({bool animated = true}) {
-    _setExpanded(true, true);
+    setExpanded(true, true);
   }
 
   void collapse({bool animated = true}) {
-    _setExpanded(false, true);
+    setExpanded(false, true);
   }
 
   void toggle({bool animated = true}) {
-    _setExpanded(!_isExpanded, animated);
+    setExpanded(!_isExpanded, animated);
   }
 
-  void _setExpanded(bool isExpanded, bool animated) {
+  void setExpanded(bool isExpanded, bool animated) {
     if (_isExpanded == isExpanded) {
       return;
     }
     if (!(widget.onExpansionWillChange?.call(isExpanded) ?? true)) {
       return;
     }
+
+    if (!mounted) return;
+
     setState(() {
       _isExpanded = isExpanded;
       if (animated) {
@@ -158,7 +166,12 @@ class ExpansionWidgetState extends State<ExpansionWidget>
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[
         widget.titleBuilder(
-            _controller.value, _heightFactor.value, _isExpanded, toggle),
+          _controller.value,
+          _heightFactor.value,
+          _isExpanded,
+          toggle,
+          setExpanded,
+        ),
         ClipRect(
           child: Align(
             alignment: widget.expandedAlignment,
